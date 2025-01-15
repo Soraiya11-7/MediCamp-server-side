@@ -35,7 +35,7 @@ async function run() {
     const participantCollection = client.db("medicalCampDB").collection("participants");
 
 
-    
+
     //register-participant.............
 
     app.post('/register-participant', async (req, res) => {
@@ -75,6 +75,17 @@ async function run() {
     app.get('/camps', async (req, res) => {
       const result = await campCollection.find().toArray();
       res.send(result);
+    });
+
+    
+    app.get('/popularCamps', async (req, res) => {
+      const camps = await campCollection
+            .find()
+            .sort({ participants: -1 }) // Sort by highest participant count
+            .limit(6) 
+            .toArray();
+            
+        res.send(camps);
     });
 
 
