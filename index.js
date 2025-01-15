@@ -31,8 +31,24 @@ async function run() {
 
     //all collections............................
     const userCollection = client.db("medicalCampDB").collection("users");
+    const campCollection = client.db("medicalCampDB").collection("camps");
 
 
+
+    //camp  related api....................................................
+
+
+    app.get('/camps', async (req, res) => {
+      const result = await campCollection.find().toArray();
+      res.send(result);
+    });
+
+
+    app.post('/camps', async (req, res) => {
+      const item = req.body;
+      const result = await campCollection.insertOne(item);
+      res.send(result);
+    });
 
     //users related api....................................................
     app.get('/users', async (req, res) => {
