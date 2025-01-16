@@ -68,13 +68,36 @@ async function run() {
       res.send(result);
     });
 
-
-
     //camp  related api....................................................
 
     app.get('/camps', async (req, res) => {
-      const result = await campCollection.find().toArray();
-      res.send(result);
+      const { search = '', sort = '' } = req.query;
+      // console.log(search,sort);
+
+        // Define search query for camp fields.........
+        let query = {
+            $or: [
+                { campName: { $regex: search, $options: 'i' } },
+                { dateTime: { $regex: search, $options: 'i' } },
+                { location: { $regex: search, $options: 'i' } },
+                { healthcareProfessional: { $regex: search, $options: 'i' } }
+            ]
+        };
+
+           // Define sorting options based on query parameter
+           let sortOptions = {};
+        
+           if (sort === 'most-registered') {
+               sortOptions = { participants: -1 };
+           } else if (sort === 'camp-fees') {
+               sortOptions = { fees: 1 };
+           } else if (sort === 'alphabetical') {
+               sortOptions = { campName: 1 };
+           }
+   
+        // Fetch camps from database with search and sorting
+           const result = await campCollection.find(query).sort(sortOptions).toArray();
+           res.send(result);
     });
 
     
