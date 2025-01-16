@@ -70,6 +70,14 @@ async function run() {
 
     //camp  related api....................................................
 
+      
+    app.get('/camps/:campId', async (req, res) => {
+          const id = req.params.campId
+          const query = { _id: new ObjectId(id) }
+          const result = await campCollection.findOne(query)
+          res.send(result)
+    })
+
     app.get('/camps', async (req, res) => {
       const { search = '', sort = '' } = req.query;
       // console.log(search,sort);
@@ -99,6 +107,16 @@ async function run() {
            const result = await campCollection.find(query).sort(sortOptions).toArray();
            res.send(result);
     });
+
+    
+    app.delete('/delete-camp/:campId',  async (req, res) => {
+      const id = req.params.campId;
+      console.log(id);
+      const query = { _id: new ObjectId(id) }
+      console.log(query);
+      const result = await campCollection.deleteOne(query);
+      res.send(result);
+    })
 
     
     app.get('/popularCamps', async (req, res) => {
