@@ -38,6 +38,25 @@ async function run() {
 
     //register-participant.............
 
+    app.get('/register-participant', async (req, res) => {
+      const { search = '' } = req.query;
+      console.log(search);
+
+      let query = {
+        $or: [
+          { campName: { $regex: search, $options: 'i' } },
+          { campFees: { $lte: parseFloat(search) } },
+          { paymentStatus: { $regex: search, $options: 'i' } },
+          { confirmationStatus: { $regex: search, $options: 'i' } },
+          { participantName: { $regex: search, $options: 'i' } }
+        ]
+      };
+
+      const result = await participantCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
     app.post('/register-participant', async (req, res) => {
       const item = req.body;
 
@@ -51,11 +70,8 @@ async function run() {
       const result = await participantCollection.insertOne(item);
 
 
-       // Update the participant count in the camp document.........
+      // Update the participant count in the camp document.........
       const camp = await campCollection.findOne({ _id: new ObjectId(item.campId) });
-      // if (!camp) {
-      //   return res.status(404).send({ message: "Camp not found" });
-      // }
 
       const filter = { _id: new ObjectId(item.campId) };
       const updateDoc = {
@@ -69,50 +85,49 @@ async function run() {
     });
 
     //camp  related api....................................................
-   
-    
-      
+
+
+
     app.get('/camps/:campId', async (req, res) => {
-          const id = req.params.campId
-          const query = { _id: new ObjectId(id) }
-          const result = await campCollection.findOne(query)
-          res.send(result)
+      const id = req.params.campId
+      const query = { _id: new ObjectId(id) }
+      const result = await campCollection.findOne(query)
+      res.send(result)
     })
 
     app.get('/camps', async (req, res) => {
       const { search = '', sort = '' } = req.query;
-      // console.log(search,sort);
+    
+      // Define search query for camp fields.........
+      let query = {
+        $or: [
+          { campName: { $regex: search, $options: 'i' } },
+          { dateTime: { $regex: search, $options: 'i' } },
+          { location: { $regex: search, $options: 'i' } },
+          { healthcareProfessional: { $regex: search, $options: 'i' } }
+        ]
+      };
 
-        // Define search query for camp fields.........
-        let query = {
-            $or: [
-                { campName: { $regex: search, $options: 'i' } },
-                { dateTime: { $regex: search, $options: 'i' } },
-                { location: { $regex: search, $options: 'i' } },
-                { healthcareProfessional: { $regex: search, $options: 'i' } }
-            ]
-        };
+      // Define sorting options based on query parameter
+      let sortOptions = {};
 
-           // Define sorting options based on query parameter
-           let sortOptions = {};
-        
-           if (sort === 'most-registered') {
-               sortOptions = { participants: -1 };
-           } else if (sort === 'camp-fees') {
-               sortOptions = { fees: 1 };
-           } else if (sort === 'alphabetical') {
-               sortOptions = { campName: 1 };
-           }
-   
-        // Fetch camps from database with search and sorting
-           const result = await campCollection.find(query).sort(sortOptions).toArray();
-           res.send(result);
+      if (sort === 'most-registered') {
+        sortOptions = { participants: -1 };
+      } else if (sort === 'camp-fees') {
+        sortOptions = { fees: 1 };
+      } else if (sort === 'alphabetical') {
+        sortOptions = { campName: 1 };
+      }
+
+      // Fetch camps from database with search and sorting
+      const result = await campCollection.find(query).sort(sortOptions).toArray();
+      res.send(result);
     });
 
     app.patch('/update-camp/:campId', async (req, res) => {
       const camp = req.body;
       const id = req.params.campId;
-      console.log(id, camp);
+      // console.log(id, camp);
       const filter = { _id: new ObjectId(id) }
       const updatedDoc = {
         $set: {
@@ -130,8 +145,8 @@ async function run() {
       res.send(result);
     })
 
-    
-    app.delete('/delete-camp/:campId',  async (req, res) => {
+
+    app.delete('/delete-camp/:campId', async (req, res) => {
       const id = req.params.campId;
       console.log(id);
       const query = { _id: new ObjectId(id) }
@@ -140,15 +155,15 @@ async function run() {
       res.send(result);
     })
 
-    
+
     app.get('/popularCamps', async (req, res) => {
       const camps = await campCollection
-            .find()
-            .sort({ participants: -1 }) // Sort by highest participant count
-            .limit(6) 
-            .toArray();
-            
-        res.send(camps);
+        .find()
+        .sort({ participants: -1 }) // Sort by highest participant count
+        .limit(6)
+        .toArray();
+
+      res.send(camps);
     });
 
 
