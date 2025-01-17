@@ -38,6 +38,27 @@ async function run() {
 
     //register-participant.............
 
+    app.delete('/delete-registered-camp/:id', async (req, res) => {
+      const id = req.params.id;
+  
+          // SDelete the participant from registeredCamps collection........
+          const result = await participantCollection.deleteOne({ _id: new ObjectId(id)});
+
+          const participantCamp = await participantCollection.findOne({ _id: new ObjectId(id) })
+  
+          const filter = { _id: new ObjectId(participantCamp.campId) };
+          const updateDoc = {
+            $inc: { participants: -1 },
+          };
+          const updateResult = await campCollection.updateOne(filter, updateDoc);
+  
+          if (updateResult.modifiedCount === 0) {
+              return res.status(500).send({ message: "Failed to update camp participants count" });
+          }
+          res.send(result);
+  });
+  
+
     app.get('/register-participant', async (req, res) => {
       const { search = '' } = req.query;
       console.log(search);
@@ -78,9 +99,6 @@ async function run() {
         $inc: { participants: 1 },
       };
       const updateResult = await campCollection.updateOne(filter, updateDoc);
-      // if (updateResult.modifiedCount === 0) {
-      //   return res.status(500).send({ message: "Failed to update participant count" });
-      // }
       res.send(result);
     });
 
@@ -152,6 +170,7 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       console.log(query);
       const result = await campCollection.deleteOne(query);
+      const deleteRegistrationsResult = await participantCollection.deleteMany({ campId: id });
       res.send(result);
     })
 
