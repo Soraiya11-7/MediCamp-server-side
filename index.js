@@ -69,7 +69,8 @@ async function run() {
     });
 
     //camp  related api....................................................
-
+   
+    
       
     app.get('/camps/:campId', async (req, res) => {
           const id = req.params.campId
@@ -107,6 +108,27 @@ async function run() {
            const result = await campCollection.find(query).sort(sortOptions).toArray();
            res.send(result);
     });
+
+    app.patch('/update-camp/:campId', async (req, res) => {
+      const camp = req.body;
+      const id = req.params.campId;
+      console.log(id, camp);
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          campName: camp.campName,
+          fees: camp.fees,
+          location: camp.location,
+          image: camp.image,
+          dateTime: camp.dateTime,
+          healthcareProfessional: camp.healthcareProfessional,
+          description: camp.description
+        }
+      }
+
+      const result = await campCollection.updateOne(filter, updatedDoc)
+      res.send(result);
+    })
 
     
     app.delete('/delete-camp/:campId',  async (req, res) => {
