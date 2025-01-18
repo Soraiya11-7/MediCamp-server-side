@@ -40,12 +40,15 @@ async function run() {
 
     app.delete('/delete-registered-camp/:id', async (req, res) => {
       const id = req.params.id;
-  
-          // SDelete the participant from registeredCamps collection........
+      console.log(id);
+
+      const participantCamp = await participantCollection.findOne({ _id: new ObjectId(id) })
+      console.log(participantCamp);
+          // Delete the participant from registeredCamps collection........
           const result = await participantCollection.deleteOne({ _id: new ObjectId(id)});
 
-          const participantCamp = await participantCollection.findOne({ _id: new ObjectId(id) })
-  
+         
+          
           const filter = { _id: new ObjectId(participantCamp.campId) };
           const updateDoc = {
             $inc: { participants: -1 },
@@ -57,11 +60,31 @@ async function run() {
           }
           res.send(result);
   });
+
+     
+      app.get('/register-camps', async (req, res) => {
+        const email = req.query.email;
+        const query = { participantEmail: email };
+        const { search = '' } = req.query;
+        // console.log(search);
+  
+        if (search) {
+          query.$or = [
+              { campName: { $regex: search, $options: 'i' } },
+              { campFees: { $lte: parseFloat(search) } },
+              { paymentStatus: { $regex: search, $options: 'i' } },
+              { confirmationStatus: { $regex: search, $options: 'i' } },
+              { participantName: { $regex: search, $options: 'i' } }
+          ];
+      }
+        const result = await participantCollection.find(query).toArray();
+        res.send(result);
+      });
   
 
     app.get('/register-participant', async (req, res) => {
       const { search = '' } = req.query;
-      console.log(search);
+      // console.log(search);
 
       let query = {
         $or: [
