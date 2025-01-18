@@ -8,5 +8,6 @@
 - **Install npm Library Packages**: 
   - npm i express cors dotenv mongodb
   - npm install jsonwebtoken
+  - npm install --save stripe
   
 
