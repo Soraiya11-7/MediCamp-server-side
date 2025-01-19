@@ -35,6 +35,7 @@ async function run() {
     const campCollection = client.db("medicalCampDB").collection("camps");
     const participantCollection = client.db("medicalCampDB").collection("participants");
     const paymentCollection = client.db("medicalCampDB").collection("payments");
+    const feedbackCollection = client.db("medicalCampDB").collection("feedback");
 
 
     //jwt.............................
@@ -58,6 +59,22 @@ async function run() {
         next();
       })
     }
+
+
+
+    //feedback related..........................
+
+    app.get('/feedbacks',  async (req, res) => {
+      const result = await feedbackCollection.find().toArray();
+      res.send(result);
+    });
+
+
+    app.post('/feedbacks', verifyToken, async (req, res) => {
+      const item = req.body;
+      const result = await feedbackCollection.insertOne(item);
+      res.send(result);
+    });
 
     //register-participant.............
 
