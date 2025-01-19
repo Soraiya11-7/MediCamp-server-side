@@ -260,6 +260,8 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
       res.send(result);
     });
 
+   
+
     app.patch('/update-camp/:campId', verifyToken, async (req, res) => {
       const camp = req.body;
       const id = req.params.campId;
@@ -328,6 +330,25 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
       res.send(result);
     });
 
+    app.patch('/update-profile/:id', verifyToken, async (req, res) => {
+      const user = req.body;
+      const id = req.params.id;
+      // console.log(id, camp);
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          phoneNumber: user.phoneNumber,
+        }
+      }
+      const result = await userCollection.updateOne(filter, updatedDoc)
+      res.send(result);
+    });
+
+  
+
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
 
@@ -342,6 +363,18 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
         admin = user?.role === 'admin';
       }
       res.send({ admin });
+    });
+
+    app.get('/users/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+  
+      res.send(user);
     })
 
 
