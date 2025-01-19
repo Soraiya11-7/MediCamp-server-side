@@ -13,7 +13,6 @@ app.use(cors());
 app.use(express.json());
 
 
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.uoi62.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -60,16 +59,14 @@ async function run() {
       })
     }
 
-
-
     //register-participant.............
 
     app.delete('/delete-registered-camp/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
-      console.log(id);
+      // console.log(id);
 
       const participantCamp = await participantCollection.findOne({ _id: new ObjectId(id) })
-      console.log(participantCamp);
+    
       // Delete the participant from registeredCamps collection........
       const result = await participantCollection.deleteOne({ _id: new ObjectId(id) });
 
@@ -79,9 +76,9 @@ async function run() {
       };
       const updateResult = await campCollection.updateOne(filter, updateDoc);
 
-      if (updateResult.modifiedCount === 0) {
-        return res.status(500).send({ message: "Failed to update camp participants count" });
-      }
+      // if (updateResult.modifiedCount === 0) {
+      //   return res.status(500).send({ message: "Failed to update camp participants count" });
+      // }
       res.send(result);
     });
 
@@ -94,12 +91,23 @@ async function run() {
       res.send(result)
     })
 
+    // Endpoint to update confirmation status
+app.patch('/register-participant/:id',verifyToken, async (req, res) => {
+  const  id  = req.params.id; 
+  const query = { _id: new ObjectId(id) }; 
+  const update = { 
+    $set: { confirmationStatus: "Confirmed" } 
+  }; 
+  const result = await participantCollection.updateOne(query, update);
+  const query2 = { registerId: id }; 
+  const result2 = await paymentCollection.updateOne(query2, update);
+  res.send(result);
+});
 
     app.get('/register-camps', verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { participantEmail: email };
       const { search = '' } = req.query;
-      // console.log(search);
 
       if (search) {
         query.$or = [
@@ -117,7 +125,6 @@ async function run() {
 
     app.get('/register-participant', verifyToken, async (req, res) => {
       const { search = '' } = req.query;
-      // console.log(search);
 
       let query = {
         $or: [
@@ -146,10 +153,6 @@ async function run() {
       }
       const result = await participantCollection.insertOne(item);
 
-
-      // Update the participant count in the camp document.........
-      // const camp = await campCollection.findOne({ _id: new ObjectId(item.campId) });
-
       const filter = { _id: new ObjectId(item.campId) };
       const updateDoc = {
         $inc: { participants: 1 },
@@ -163,7 +166,6 @@ async function run() {
     app.post('/create-payment-intent', verifyToken, async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
-      // console.log(amount, 'amount inside the intent')
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
@@ -176,17 +178,28 @@ async function run() {
       })
     });
 
-
-    app.get('/payments/:email', async (req, res) => {
-      const query = { email: req.params.email }
-      const result = await paymentCollection.find(query).toArray();
+    app.get('/payments/:email', verifyToken, async (req, res) => {
+      const { email } = req.params;
+      const { search = '' } = req.query;
+  
+      const query = { email };
+      const searchQuery = {
+          $or: [
+              { campName: { $regex: search, $options: 'i' } },
+              { price: { $lte: parseFloat(search) } },
+              { paymentStatus: { $regex: search, $options: 'i' } },
+              { confirmationStatus: { $regex: search, $options: 'i' } },
+          ],
+      };
+  
+      const result = await paymentCollection.find({ ...query, ...searchQuery }).toArray();
       res.send(result);
-    })
-
+  });
+  
+  
     app.post('/payments', verifyToken, async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
-      console.log(payment.registerId);
       const query = { _id: new ObjectId(payment.registerId) }
       const update = { $set: { paymentStatus: "Paid" } };
       const updateResult = await participantCollection.updateOne(query, update);
@@ -194,9 +207,6 @@ async function run() {
     });
 
     //camp  related api....................................................
-
-
-
     app.get('/camps/:campId', verifyToken, async (req, res) => {
       const id = req.params.campId
       const query = { _id: new ObjectId(id) }
@@ -257,9 +267,9 @@ async function run() {
 
     app.delete('/delete-camp/:campId', verifyToken, async (req, res) => {
       const id = req.params.campId;
-      console.log(id);
+      // console.log(id);
       const query = { _id: new ObjectId(id) }
-      console.log(query);
+      // console.log(query);
       const result = await campCollection.deleteOne(query);
       const deleteRegistrationsResult = await participantCollection.deleteMany({ campId: id });
       res.send(result);
@@ -327,9 +337,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-
-
 
 app.get('/', (req, res) => {
   res.send("server is running...");
