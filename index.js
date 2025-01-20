@@ -61,6 +61,18 @@ async function run() {
     }
 
 
+       // use verify admin after verifyToken
+       const verifyAdmin = async (req, res, next) => {
+        const email = req.decoded.email;
+        const query = { email: email };
+        const user = await userCollection.findOne(query);
+        const isAdmin = user?.role === 'admin';
+        if (!isAdmin) {
+          return res.status(403).send({ message: 'forbidden access' });
+        }
+        next();
+      }
+
 
     //feedback related..........................
 
@@ -77,7 +89,7 @@ async function run() {
     });
 
     //register-participant.............
-
+//admin...
     app.delete('/delete-registered-camp/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       // console.log(id);
@@ -100,7 +112,7 @@ async function run() {
     });
 
 
-    //pay........
+    //pay ........
     app.get('/registeredCamps/:id', verifyToken, async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
@@ -108,8 +120,8 @@ async function run() {
       res.send(result)
     })
 
-    // Endpoint to update confirmation status
-app.patch('/register-participant/:id',verifyToken, async (req, res) => {
+    // Admin ... update Confirmation status.....
+app.patch('/register-participant/:id',verifyToken, verifyAdmin, async (req, res) => {
   const  id  = req.params.id; 
   const query = { _id: new ObjectId(id) }; 
   const update = { 
@@ -262,7 +274,7 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
 
    
 
-    app.patch('/update-camp/:campId', verifyToken, async (req, res) => {
+    app.patch('/update-camp/:campId', verifyToken,verifyAdmin, async (req, res) => {
       const camp = req.body;
       const id = req.params.campId;
       // console.log(id, camp);
@@ -284,7 +296,8 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
     })
 
 
-    app.delete('/delete-camp/:campId', verifyToken, async (req, res) => {
+    //admin...
+    app.delete('/delete-camp/:campId', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.campId;
       // console.log(id);
       const query = { _id: new ObjectId(id) }
@@ -306,14 +319,16 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
     });
 
 
-    app.post('/camps', verifyToken, async (req, res) => {
+
+    //admin...
+    app.post('/camps', verifyToken, verifyAdmin, async (req, res) => {
       const item = req.body;
       const result = await campCollection.insertOne(item);
       res.send(result);
     });
 
     //users related api....................................................
-    app.get('/users', verifyToken, async (req, res) => {
+    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
@@ -348,7 +363,7 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
     });
 
   
-
+//check role admin or not....
     app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
 
@@ -380,7 +395,7 @@ app.patch('/register-participant/:id',verifyToken, async (req, res) => {
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
