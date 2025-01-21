@@ -27,7 +27,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
 
     //all collections............................
@@ -190,7 +190,6 @@ app.patch('/register-participant/:id',verifyToken, verifyAdmin, async (req, res)
       res.send(result);
     });
 
-
     // payment intent.................
     app.post('/create-payment-intent', verifyToken, async (req, res) => {
       const { price } = req.body;
@@ -236,7 +235,7 @@ app.patch('/register-participant/:id',verifyToken, verifyAdmin, async (req, res)
     });
 
     //camp  related api....................................................
-    app.get('/camps/:campId', verifyToken, async (req, res) => {
+    app.get('/camps/:campId', async (req, res) => {
       const id = req.params.campId
       const query = { _id: new ObjectId(id) }
       const result = await campCollection.findOne(query)
