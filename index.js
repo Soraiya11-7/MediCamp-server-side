@@ -41,7 +41,7 @@ async function run() {
     //jwt.............................
     app.post('/jwt', async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '365d' });
       res.send({ token });
     });
 
@@ -88,8 +88,7 @@ async function run() {
       res.send(result);
     });
 
-    //register-participant.............
-//admin...
+    //register-participant................
     app.delete('/delete-registered-camp/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       // console.log(id);
@@ -104,10 +103,6 @@ async function run() {
         $inc: { participants: -1 },
       };
       const updateResult = await campCollection.updateOne(filter, updateDoc);
-
-      // if (updateResult.modifiedCount === 0) {
-      //   return res.status(500).send({ message: "Failed to update camp participants count" });
-      // }
       res.send(result);
     });
 
@@ -209,12 +204,16 @@ app.patch('/register-participant/:id',verifyToken, verifyAdmin, async (req, res)
     app.get('/payments/:email', verifyToken, async (req, res) => {
       const { email } = req.params;
       const { search = '' } = req.query;
+
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
   
       const query = { email };
       const searchQuery = {
           $or: [
               { campName: { $regex: search, $options: 'i' } },
-              { price: { $lte: parseFloat(search) } },
+              { price: { $eq: parseFloat(search) } },
               { paymentStatus: { $regex: search, $options: 'i' } },
               { confirmationStatus: { $regex: search, $options: 'i' } },
           ],
@@ -289,8 +288,18 @@ app.patch('/register-participant/:id',verifyToken, verifyAdmin, async (req, res)
           description: camp.description
         }
       }
-
+      const updatedDoc2 = {
+        $set: {
+          campName: camp.campName,
+          campFees: camp.fees,
+          location: camp.location,
+          healthcareProfessional: camp.healthcareProfessional,
+        }
+      }
+     
+      const filter2 = { campId: id }
       const result = await campCollection.updateOne(filter, updatedDoc)
+      const result2 = await participantCollection.updateOne(filter2, updatedDoc2)
       res.send(result);
     })
 
@@ -357,18 +366,28 @@ app.patch('/register-participant/:id',verifyToken, verifyAdmin, async (req, res)
           phoneNumber: user.phoneNumber,
         }
       }
+
+      const updatedDoc2 = {
+        $set: {
+          participantName: user.name,
+        }
+      }
+     
+      const filter2 = { participantEmail: user.email }
       const result = await userCollection.updateOne(filter, updatedDoc)
+      const result2 = await participantCollection.updateOne(filter2, updatedDoc2)
+      
       res.send(result);
     });
 
   
 //check role admin or not....
-    app.get('/users/admin/:email', verifyToken, async (req, res) => {
+    app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
 
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' })
-      }
+      // if (email !== req.decoded.email) {
+      //   return res.status(403).send({ message: 'forbidden access' })
+      // }
       const query = { email: email };
 
       const user = await userCollection.findOne(query);
