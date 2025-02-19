@@ -110,6 +110,9 @@ app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) 
     // Extract total fees (if no payments exist, set to 0)
     const totalFeesAmount = totalFees.length > 0 ? totalFees[0].total : 0;
 
+    // Get participants count from campCollection
+    const campsWithParticipants = await campCollection.find({}, { projection: { campName: 1, participants: 1 } }).toArray();
+
 
 
     // Sending aggregated result to client
