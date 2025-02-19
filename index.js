@@ -94,6 +94,10 @@ app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) 
     // Aggregate total camps
     const totalCamps = await campCollection.countDocuments();
 
+     // Aggregate total users
+     const totalUsers = await userCollection.countDocuments();
+
+
     // Aggregate total registered users based on unique email
     const registeredUsers = await participantCollection.aggregate([
       { $match: { confirmationStatus: 'Confirmed' } },  // Ensure only confirmed participants are considered
@@ -118,10 +122,6 @@ app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) 
       campName: camp.campName,
       participantsCount: camp.participants || 0 // Ensure count is always a number
     }));
-
-
-     // Aggregate total users
-     const totalUsers = await userCollection.countDocuments();
 
 
     // Sending aggregated result to client
