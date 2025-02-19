@@ -113,6 +113,12 @@ app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) 
     // Get participants count from campCollection
     const campsWithParticipants = await campCollection.find({}, { projection: { campName: 1, participants: 1 } }).toArray();
 
+     // Format registeredPerCamp
+     const registeredPerCamp = campsWithParticipants.map(camp => ({
+      campName: camp.campName,
+      participantsCount: camp.participants || 0 // Ensure count is always a number
+    }));
+
 
 
     // Sending aggregated result to client
@@ -120,6 +126,7 @@ app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) 
       totalCamps,
       totalRegisteredUsers,
       totalFees: totalFeesAmount,
+      registeredPerCamp
     });
   } catch (err) {
     console.error("Error aggregating data:", err);
