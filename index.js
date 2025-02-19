@@ -102,13 +102,21 @@ app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) 
     
     const totalRegisteredUsers = registeredUsers.length;
 
+     // Aggregate total fees from payments
+     const totalFees = await paymentCollection.aggregate([
+      { $group: { _id: null, total: { $sum: '$price' } } }
+    ]).toArray();
+
+    // Extract total fees (if no payments exist, set to 0)
+    const totalFeesAmount = totalFees.length > 0 ? totalFees[0].total : 0;
+
 
 
     // Sending aggregated result to client
     res.send({
       totalCamps,
-      totalRegisteredUsers
-     
+      totalRegisteredUsers,
+      totalFees: totalFeesAmount,
     });
   } catch (err) {
     console.error("Error aggregating data:", err);
