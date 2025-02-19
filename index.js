@@ -120,10 +120,14 @@ app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) 
     }));
 
 
+     // Aggregate total users
+     const totalUsers = await userCollection.countDocuments();
+
 
     // Sending aggregated result to client
     res.send({
       totalCamps,
+      totalUsers,
       totalRegisteredUsers,
       totalFees: totalFeesAmount,
       registeredPerCamp
