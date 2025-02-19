@@ -88,6 +88,27 @@ async function run() {
       res.send(result);
     });
 
+// Overview
+app.get('/admin-dashboard-overview', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    // Aggregate total camps
+    const totalCamps = await campCollection.countDocuments();
+
+
+
+    // Sending aggregated result to client
+    res.send({
+      totalCamps,
+     
+    });
+  } catch (err) {
+    console.error("Error aggregating data:", err);
+    res.status(500).send({ error: 'Failed to fetch data' });
+  }
+});
+
+    
+
     //register-participant................
     app.delete('/delete-registered-camp/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
@@ -364,6 +385,7 @@ app.patch('/register-participant/:id',verifyToken, verifyAdmin, async (req, res)
           email: user.email,
           image: user.image,
           phoneNumber: user.phoneNumber,
+          location: user.location
         }
       }
 
